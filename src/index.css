@@ -1,0 +1,82 @@
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,600&family=Outfit:wght@300;400;500;600;700&display=swap');
+@import 'tailwindcss';
+
+@theme {
+  --color-background: #F9F7F3;
+  --color-foreground: #2C2417;
+  --color-petra: #D98A6C;
+  --color-petra-light: #EDB99E;
+  --color-petra-dark: #B8633E;
+  --color-olive: #6B8E23;
+  --color-olive-light: #8CB02E;
+  --color-olive-dark: #4A6318;
+  --color-sand: #E8E0D0;
+  --color-sand-dark: #C9BDA8;
+  --color-muted: #8A7B6B;
+  --color-card: #FDFCFA;
+
+  --font-display: 'Fraunces', Georgia, serif;
+  --font-body: 'Outfit', system-ui, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: var(--font-body);
+  background-color: #F9F7F3;
+  color: #2C2417;
+  -webkit-font-smoothing: antialiased;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #C9BDA8;
+  border-radius: 3px;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+:hover::-webkit-scrollbar-thumb {
+  opacity: 1;
+}
+
+.font-display {
+  font-family: var(--font-display);
+}
+
+.progress-bar {
+  background: linear-gradient(90deg, #6B8E23, #8CB02E);
+}
+
+.thread-path {
+  stroke-dasharray: 8 4;
+  animation: dash 20s linear infinite;
+}
+
+@keyframes dash {
+  to { stroke-dashoffset: -100; }
+}
+
+.node-glow {
+  box-shadow: 0 0 0 4px #F9F7F3, 0 0 0 7px #D98A6C, 0 0 20px rgba(217, 138, 108, 0.5);
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 0 4px #F9F7F3, 0 0 0 7px #D98A6C, 0 0 20px rgba(217, 138, 108, 0.5); }
+  50% { box-shadow: 0 0 0 4px #F9F7F3, 0 0 0 9px #D98A6C, 0 0 30px rgba(217, 138, 108, 0.7); }
+}
+
+.badge-glow {
+  box-shadow: 0 0 12px rgba(107, 142, 35, 0.4);
+}

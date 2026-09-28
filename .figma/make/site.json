@@ -1,0 +1,10 @@
+{
+  "description": "Explore Jordan through immersive, gamified story threads that engage travelers with interactive narratives, community challenges, and rewards.",
+  "robots": {
+    "index": false
+  },
+  "accessibility": {
+    "addBypassLinks": false,
+    "ignoreReducedMotion": false
+  }
+}
