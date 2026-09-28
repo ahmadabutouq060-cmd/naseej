@@ -289,6 +289,8 @@
     ];
     if (NASEEJ.ui.activeImage == null) NASEEJ.ui.activeImage = 0;
     var ai = NASEEJ.ui.activeImage;
+    /* publish the real length so prev/next clamp to the gallery, not a literal */
+    NASEEJ.ui.galleryLen = images.length;
 
     var dm = t.subtitle.match(/Easy|Moderate|Strenuous/i);
     var diff = dm ? dm[0] : 'Moderate';
@@ -364,7 +366,7 @@
       '<div class="rounded-xl p-4 flex items-center gap-4" style="background-color:#FDFCFA;border:1px solid #E8E0D0">' +
       '<div class="w-10 h-10 rounded-full flex items-center justify-center text-xl flex-shrink-0" style="background-color:rgba(217,138,108,0.1)">📍</div>' +
       '<div class="flex-1 min-w-0"><div class="text-sm font-body font-semibold truncate" style="color:#2C2417">' +
-      E(wp.location || (t.city + ', Jordan')) + '</div>' +
+      E(wp.location != null ? wp.location : t.city + ', Jordan') + '</div>' +
       '<div class="text-xs font-body" style="color:#8A7B6B">' + E(wp.type) + '</div></div>' +
       '<button class="text-xs font-body font-medium px-3 py-1.5 rounded-full flex-shrink-0" style="background-color:rgba(107,142,35,0.1);color:#6B8E23">Open in Maps</button>' +
       '</div></div>' +
@@ -528,7 +530,7 @@
 
     document.getElementById('lib-svg').innerHTML =
       '<text x="22" y="32" font-size="14" font-family="Fraunces,serif" font-weight="700" fill="#2C2417" opacity="0.85">Jordan</text>' +
-      '<text x="22" y="46" font-size="7.5" font-family="Outfit,sans-serif" fill="#8A7B6B" letterSpacing="0.1em">TAP A CITY TO EXPLORE</text>' +
+      '<text x="22" y="46" font-size="7.5" font-family="Outfit,sans-serif" fill="#8A7B6B" letter-spacing="0.1em">TAP A CITY TO EXPLORE</text>' +
       pins +
       '<g transform="translate(600,490)"><circle cx="0" cy="0" r="13" fill="rgba(253,252,250,0.92)" stroke="#CCC0A8" stroke-width="0.8"/>' +
       '<path d="M0,-10 L2.5,0 L0,3.5 L-2.5,0 Z" fill="#D98A6C"/>' +
@@ -544,13 +546,17 @@
       if (panel && panel.parentNode) panel.parentNode.removeChild(panel);
       return;
     }
-    if (!panel) {
+    var fresh = !panel;
+    if (fresh) {
       panel = document.createElement('div');
       panel.id = 'lib-panel';
       panel.className = 'flex-1 overflow-y-auto';
       panel.style.maxHeight = '660px';
       document.getElementById('lib-flex').appendChild(panel);
     }
+    /* React keeps this scroll container mounted across filter changes, so the
+       reading position survives; only a freshly mounted panel starts at top. */
+    var keepScroll = fresh ? 0 : panel.scrollTop;
     var list = libraryThreads.filter(function (t) { return t.city === sc && libMatch(t); });
     panel.innerHTML =
       '<div class="mb-5"><p class="text-xs font-body font-medium uppercase tracking-widest mb-1" style="color:#D98A6C">' +
@@ -562,6 +568,7 @@
           '<p class="font-body text-sm" style="color:#8A7B6B">No threads match your current filters.</p>' +
           '<button data-act="clear" class="mt-3 text-xs font-body font-medium" style="color:#D98A6C">Clear filters</button></div>'
         : '<div class="flex flex-col gap-4">' + list.map(libCard).join('') + '</div>');
+    if (keepScroll) panel.scrollTop = keepScroll;
   }
 
   /* ═════════════════════ USER PROFILE ═════════════════════ */

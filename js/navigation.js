@@ -8,7 +8,7 @@ window.NASEEJ = NASEEJ;
 NASEEJ.state = { page: 'home', threadId: null, waypointId: null };
 
 /* Per-page local state (was useState inside each page component).
-   Reset on every fresh mount so state matches React's mount semantics.     */
+   Dropped when a page unmounts, kept when only its params change.           */
 NASEEJ.ui = {};
 
 NASEEJ.esc = function (s) {
@@ -43,17 +43,28 @@ NASEEJ.navigate = function (page, threadId, waypointId) {
   if (waypointId !== undefined) NASEEJ.state.waypointId = waypointId;
   NASEEJ.state.page = page;
   var h = hashFor();
-  if (location.hash === h) NASEEJ.mount(true);
-  else location.hash = h; // hashchange -> route() -> mount()
+  if (location.hash === h) {
+    /* React: setCurrentPage() with an identical value bails out of the re-render,
+       so each page's useState survives. Keep NASEEJ.ui, just scroll and repaint. */
+    window.scrollTo(0, 0);
+    NASEEJ.paint();
+  } else location.hash = h; // hashchange -> route() -> mount()
 };
+
+/* Which page is currently mounted. React re-renders one page component when
+   only its props change, so thread -> thread and place -> place keep their
+   local state; leaving the page unmounts it and clears that state.          */
+var mountedPage = null;
 
 function route() {
   var p = location.hash.replace(/^#\/?/, '').split('/');
   if (PAGES.indexOf(p[0]) < 0) p = ['home']; // first visit -> home
+  var samePage = mountedPage === p[0];
   NASEEJ.state.page = p[0];
   if (p[1] && !isNaN(+p[1])) NASEEJ.state.threadId = +p[1];
   if (p[2] && !isNaN(+p[2])) NASEEJ.state.waypointId = +p[2];
-  NASEEJ.mount(true);
+  mountedPage = p[0];
+  NASEEJ.mount(!samePage);
 }
 
 window.addEventListener('hashchange', route);
@@ -93,22 +104,59 @@ NASEEJ.eyebrow = function (color, width, text, trailingRule) {
 };
 
 /* ── Mount / repaint ──────────────────────────────────────────────────────── */
+
+/* innerHTML destroys the focused node, so React's reconciliation behaviour
+   (focus survives a re-render) is restored by re-focusing the equivalent
+   control after the swap. Identity = id, else data-* attrs + position. */
+var FOCUSABLE = '[data-nav],[data-act]';
+
+function focusKey(el) {
+  if (!el || !el.tagName) return '';
+  var d = el.dataset || {};
+  return [el.tagName, d.nav || '', d.act || '', d.v || '', d.thread || '', d.wp || ''].join('|');
+}
+
 NASEEJ.paint = function () {
   if (!NASEEJ.pages) return;
   var host = document.getElementById('app');
+
+  var act = document.activeElement;
+  var restore = act && host.contains(act);
+  var key = restore ? focusKey(act) : '';
+  var byId = restore && act.id ? act.id : '';
+  var idx = -1;
+  if (restore && !byId) {
+    idx = Array.prototype.indexOf.call(host.querySelectorAll(FOCUSABLE), act);
+  }
+
   host.innerHTML = NASEEJ.navBar() + NASEEJ.pages[NASEEJ.state.page]();
+
+  if (restore) {
+    var target = null;
+    if (byId) {
+      target = document.getElementById(byId);
+    } else if (idx >= 0) {
+      var list = host.querySelectorAll(FOCUSABLE);
+      var cand = list[idx];
+      if (cand && focusKey(cand) === key) target = cand;
+    }
+    if (target && target.focus) target.focus();
+  }
+
   /* The library keeps a live <input>, so it patches itself instead of
      re-rendering the whole page (would drop focus while typing). */
   if (NASEEJ.state.page === 'discover') NASEEJ.updateLibrary();
 };
 
 NASEEJ.mount = function (fresh) {
+  /* `fresh` gates only the page-local state reset. App.tsx's navigate() called
+     window.scrollTo(0, 0) unconditionally, so scrolling stays unconditional. */
   if (fresh) {
     NASEEJ.ui = NASEEJ.state.page === 'discover'
       ? { category: 'All', search: '', city: null }
       : {};
-    window.scrollTo(0, 0);
   }
+  window.scrollTo(0, 0);
   NASEEJ.paint();
 };
 
@@ -130,7 +178,7 @@ document.addEventListener('click', function (ev) {
     case 'node': ui.activeNode = +v; NASEEJ.paint(); break;
     case 'img': ui.activeImage = +v; NASEEJ.paint(); break;
     case 'prev': ui.activeImage = Math.max(0, (ui.activeImage || 0) - 1); NASEEJ.paint(); break;
-    case 'next': ui.activeImage = Math.min(3, (ui.activeImage || 0) + 1); NASEEJ.paint(); break;
+    case 'next': ui.activeImage = Math.min((ui.galleryLen || 4) - 1, (ui.activeImage || 0) + 1); NASEEJ.paint(); break;
     case 'qr':
       ui.challengeOpen = true;
       ui.qr = [];
