@@ -1,4 +1,6 @@
-# Naseej — Explore Jordan Through Stories
+# Naseej — Historical React/Vanilla Source Snapshot
+
+> **Status: historical copy, not the canonical source.** Continue from [the current Naseej implementation](https://github.com/ahmadabutouq060-cmd/new2). This repository is retained here only as a reference until it can be archived or removed.
 
 Naseej is a gamified tourism web experience designed to make discovering Jordan more interactive through travel story threads, places, waypoints, challenges, progress, and rewards.
 
